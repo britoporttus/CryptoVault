@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Recurse -File)",
+      "Bash(Select-Object FullName)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Digital\\\\OneDrive - TrustSis Consultoria\\\\Documentos\\\\fatec\\\\cryptovault-projeto\\\\cryptovault\" -Recurse -Force)",
+      "Bash(npm install *)",
+      "Bash(npx vite *)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}
