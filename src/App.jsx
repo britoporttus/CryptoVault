@@ -708,13 +708,14 @@ export default function App() {
     const saved   = loadPersistedState();
     const initial = createInitialState();
     if (!saved) return initial;
-    // Garante que o admin padrão sempre existe após carregar do localStorage
-    const savedUsers = saved.users || [];
-    const hasAdmin   = savedUsers.some((u) => u.id === "admin-1");
+    // Garante que todos os admins padrão sempre existem no localStorage
+    const savedUsers   = saved.users || [];
+    const savedIds     = new Set(savedUsers.map((u) => u.id));
+    const missingAdmins = initial.users.filter((u) => !savedIds.has(u.id));
     return {
       ...initial,
       ...saved,
-      users:         hasAdmin ? savedUsers : [initial.users[0], ...savedUsers],
+      users:         [...missingAdmins, ...savedUsers],
       currentUser:   null,   // força re-login por segurança
       notifications: [],     // notificações são efêmeras
     };

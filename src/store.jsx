@@ -35,6 +35,18 @@ export function createInitialState() {
         banHistory: [],
         pendingNotifications: [],
       },
+      {
+        id: "admin-2",
+        name: "João Brito",
+        email: "britojoao891@gmail.com",
+        role: "admin",
+        password: "Joao@2025!",
+        banned: false,
+        suspiciousCount: 0,
+        createdAt: new Date().toLocaleString("pt-BR"),
+        banHistory: [],
+        pendingNotifications: [],
+      },
     ],
     currentUser: null,
     logs: [],
@@ -207,7 +219,7 @@ export function appReducer(state, action) {
         ? {
             action:  "ban",
             at:      now,
-            trigger: `Múltiplas falhas de descriptografia (${newCount}/${CONFIG.DECRYPT_MAX_FAILS})`,
+            trigger: `Excedeu o limite de tentativas de descriptografia: ${newCount} tentativas inválidas com chave incorreta no arquivo "${action.fileName}". Acesso bloqueado automaticamente por segurança.`,
             by:      "system",
             byName:  "Sistema automático",
             reverted: false,
@@ -236,7 +248,7 @@ export function appReducer(state, action) {
       s = withNotification(s, "decrypt_fail", `${user.email} (${newCount}/${CONFIG.DECRYPT_MAX_FAILS})`);
       if (banned) {
         // userId passado explicitamente para não perder a referência após currentUser = null
-        s = withLog(s, "ban", `Usuário banido por atividade suspeita: ${user.email}`, user.id);
+        s = withLog(s, "ban", banEntry.trigger, user.id);
         s = withNotification(s, "ban", user.email);
       }
       return s;
