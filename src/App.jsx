@@ -721,7 +721,12 @@ export default function App() {
   });
 
   const [page, setPage] = useState("encrypt");
-  const processedLogIds = useRef(new Set());
+  // Inicializa com todos os IDs já existentes no localStorage para não reenviar
+  // e-mails de logs históricos a cada recarga de página.
+  const processedLogIds = useRef(null);
+  if (processedLogIds.current === null) {
+    processedLogIds.current = new Set(state.logs.map((l) => l.id));
+  }
 
   // Persiste estado relevante no localStorage a cada mudança
   useEffect(() => {
