@@ -23,4 +23,7 @@ export const CONFIG = {
 
   // E-mail do administrador para receber notificações
   ADMIN_EMAIL: import.meta.env.VITE_ADMIN_EMAIL || "jodolar646@mtupu.com",
+
+  // URL do backend Flask (criptografia Python)
+  API_URL: import.meta.env.VITE_API_URL || "http://localhost:5000",
 };

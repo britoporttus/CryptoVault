@@ -1,6 +1,7 @@
 import { useState, useReducer, useCallback, useEffect, useRef } from "react";
-import { generateKey, importKey, encryptFile, decryptFile, isFileAllowed, ALLOWED_EXTENSIONS } from "./crypto.jsx";
+import { isFileAllowed, ALLOWED_EXTENSIONS } from "./crypto.jsx";
 import { validatePassword, isPasswordValid, createInitialState, appReducer } from "./store.jsx";
+import { CONFIG } from "./config.js";
 import {
   IconLock, IconUnlock, IconUpload, IconDownload, IconUsers, IconUser, IconFile,
   IconBell, IconShield, IconKey, IconX, IconCheck, IconSettings, IconFolder,
@@ -155,12 +156,23 @@ function PageCriptografar({ state, dispatch }) {
     if (!file) return;
     setBusy(true);
     try {
-      const { key, hex } = await generateKey();
-      const encrypted = await encryptFile(file, key);
-      const blob = new Blob([encrypted]);
-      const url = URL.createObjectURL(blob);
-      dispatch({ type: "FILE_ENCRYPTED", fileName: file.name, keyHex: hex });
-      setResult({ ok: true, keyHex: hex, url, dlName: `${file.name}.encrypted` });
+      const form = new FormData();
+      form.append("file", file);
+
+      const res = await fetch(`${CONFIG.API_URL}/encrypt`, { method: "POST", body: form });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Erro no servidor");
+      }
+
+      const { key, encrypted, filename } = await res.json();
+
+      // Converte base64 → Blob para download
+      const bytes = Uint8Array.from(atob(encrypted), (c) => c.charCodeAt(0));
+      const url   = URL.createObjectURL(new Blob([bytes]));
+
+      dispatch({ type: "FILE_ENCRYPTED", fileName: file.name, keyHex: key });
+      setResult({ ok: true, keyHex: key, url, dlName: filename });
     } catch (err) {
       setResult({ error: "Erro: " + err.message });
     }
@@ -175,7 +187,7 @@ function PageCriptografar({ state, dispatch }) {
     <div className="fade-in">
       <div className="page-header">
         <h2 className="page-title">Criptografar Arquivo</h2>
-        <p className="page-desc">AES-GCM 128-bit — chave única gerada por arquivo</p>
+        <p className="page-desc">AES-128-GCM — chave única gerada pelo servidor Python</p>
       </div>
 
       <div className="card">
@@ -232,22 +244,30 @@ function PageDescriptografar({ state, dispatch }) {
     if (!file || !keyHex) return;
     setBusy(true);
     try {
-      const ck = await importKey(keyHex);
-      const buf = await file.arrayBuffer();
-      const plain = await decryptFile(buf, ck);
-      const origName = file.name.replace(/\.encrypted$/, "");
-      const url = URL.createObjectURL(new Blob([plain]));
-      dispatch({ type: "FILE_DECRYPTED", fileName: file.name });
-      setResult({ ok: true, url, origName });
-    } catch {
-      dispatch({ type: "DECRYPT_FAILED", fileName: file.name });
-      const u = state.users.find((x) => x.id === state.currentUser?.id);
-      const cnt = (u?.suspiciousCount || 0) + 1;
-      setResult({
-        error: cnt >= 3
-          ? "Conta banida por múltiplas tentativas inválidas."
-          : `Chave incorreta ou arquivo corrompido. Tentativa ${cnt}/3.`,
-      });
+      const form = new FormData();
+      form.append("file", file);
+      form.append("key", keyHex);
+
+      const res = await fetch(`${CONFIG.API_URL}/decrypt`, { method: "POST", body: form });
+
+      if (!res.ok) {
+        dispatch({ type: "DECRYPT_FAILED", fileName: file.name });
+        const u   = state.users.find((x) => x.id === state.currentUser?.id);
+        const cnt = (u?.suspiciousCount || 0) + 1;
+        setResult({
+          error: cnt >= 3
+            ? "Conta banida por múltiplas tentativas inválidas."
+            : `Chave incorreta ou arquivo corrompido. Tentativa ${cnt}/3.`,
+        });
+      } else {
+        const blob     = await res.blob();
+        const origName = file.name.replace(/\.encrypted$/, "");
+        const url      = URL.createObjectURL(blob);
+        dispatch({ type: "FILE_DECRYPTED", fileName: file.name });
+        setResult({ ok: true, url, origName });
+      }
+    } catch (err) {
+      setResult({ error: "Servidor indisponível. Verifique se o backend está rodando." });
     }
     setBusy(false);
   }
@@ -256,7 +276,7 @@ function PageDescriptografar({ state, dispatch }) {
     <div className="fade-in">
       <div className="page-header">
         <h2 className="page-title">Descriptografar Arquivo</h2>
-        <p className="page-desc">Insira o arquivo .encrypted e a chave de 32 caracteres hex</p>
+        <p className="page-desc">Insira o arquivo .encrypted e a chave AES-128 (32 caracteres hex)</p>
       </div>
 
       <div className="card">
@@ -708,18 +728,29 @@ export default function App() {
     persistState(state);
   }, [state]);
 
-  // Dispara e-mails para admin em resposta a novos logs (async, non-blocking)
+  // Dispara e-mails em resposta a novos logs (async, non-blocking)
+  // Admin recebe no e-mail cadastrado no perfil; usuário recebe no e-mail do registro.
   useEffect(() => {
+    const adminEmails = state.users
+      .filter((u) => u.role === "admin")
+      .map((u) => u.email);
+
     for (const log of state.logs) {
       if (processedLogIds.current.has(log.id)) break;
       processedLogIds.current.add(log.id);
 
       if (log.type === "ban") {
         const banned = state.users.find((u) => u.id === log.userId);
-        if (banned) emailService.notifyAdminBan(banned, log.detail, log.time).catch(console.error);
+        if (banned) {
+          // Notifica todos os admins (e-mail do perfil deles)
+          emailService.notifyAdminBan(banned, log.detail, log.time, adminEmails).catch(console.error);
+          // Notifica o próprio usuário banido (e-mail do registro)
+          emailService.notifyUserBan(banned, log.detail, log.time).catch(console.error);
+        }
       }
       if (["suspicious_ratelimit", "suspicious_cred", "suspicious_file"].includes(log.type)) {
-        emailService.notifyAdminSuspicious(log.type, log.detail, log.time).catch(console.error);
+        // Notifica todos os admins (e-mail do perfil deles)
+        emailService.notifyAdminSuspicious(log.type, log.detail, log.time, adminEmails).catch(console.error);
       }
     }
   }, [state.logs, state.users]);
