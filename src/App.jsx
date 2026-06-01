@@ -1,7 +1,6 @@
 import { useState, useReducer, useCallback, useEffect, useRef } from "react";
-import { isFileAllowed, ALLOWED_EXTENSIONS } from "./crypto.jsx";
 import { validatePassword, isPasswordValid, createInitialState, appReducer } from "./store.jsx";
-import { CONFIG } from "./config.js";
+import { CONFIG, isFileAllowed, ALLOWED_EXTENSIONS } from "./config.js";
 import {
   IconLock, IconUnlock, IconUpload, IconDownload, IconUsers, IconUser, IconFile,
   IconBell, IconShield, IconKey, IconX, IconCheck, IconSettings, IconFolder,

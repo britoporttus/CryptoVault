@@ -27,3 +27,12 @@ export const CONFIG = {
   // URL do backend Flask (criptografia Python)
   API_URL: import.meta.env.VITE_API_URL || "http://localhost:5000",
 };
+
+// Exporta a allowlist diretamente para uso nos componentes
+export const ALLOWED_EXTENSIONS = CONFIG.ALLOWED_EXTENSIONS;
+
+// Valida se a extensão do arquivo está na allowlist
+export function isFileAllowed(fileName) {
+  const ext = "." + fileName.split(".").pop().toLowerCase();
+  return ALLOWED_EXTENSIONS.includes(ext);
+}
