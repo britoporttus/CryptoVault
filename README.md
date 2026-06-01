@@ -95,16 +95,11 @@ cryptovault/
 │   ├── App.jsx             # Componentes e páginas React
 │   ├── store.jsx           # Gerenciamento de estado (useReducer)
 │   ├── config.js           # Configurações e variáveis de ambiente
-│   ├── crypto.jsx          # Utilitários de criptografia (Web Crypto)
 │   ├── emailService.js     # Serviço de e-mail (EmailJS)
 │   ├── persistence.js      # Persistência via localStorage
 │   ├── icons.jsx           # Ícones SVG
 │   ├── main.jsx            # Entrada da aplicação
 │   └── styles.css          # Estilos globais
-├── encrypted128.py         # Script standalone — criptografar (AES-128)
-├── encrypted256.py         # Script standalone — criptografar (AES-256)
-├── decrypted128.py         # Script standalone — descriptografar (AES-128)
-├── decrypted256.py         # Script standalone — descriptografar (AES-256)
 ├── .env                    # Variáveis de ambiente (não vai para o GitHub)
 ├── .gitignore
 ├── index.html
@@ -308,26 +303,6 @@ pip install pycryptodome
 
 ---
 
-## Acesso ao sistema
-
-### Credenciais padrão do administrador
-
-| Campo | Valor |
-|-------|-------|
-| E-mail | `admin@cryptovault.local` |
-| Senha | `Admin@123` |
-
-> Em produção, altere as credenciais padrão no arquivo `src/store.jsx`.
-
-### Requisitos de senha para novos usuários
-
-- Mínimo 8 caracteres
-- Uma letra maiúscula
-- Uma letra minúscula
-- Um número
-- Um caractere especial (`!@#$%...`)
-
----
 
 ## Algoritmo de criptografia
 
