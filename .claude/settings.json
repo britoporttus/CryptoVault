@@ -7,7 +7,16 @@
       "Bash(npm install *)",
       "Bash(npx vite *)",
       "Bash(git init *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git push *)",
+      "Bash(gh auth *)",
+      "Bash(del \"c:\\\\Users\\\\Digital\\\\OneDrive - TrustSis Consultoria\\\\Documentos\\\\fatec\\\\cryptovault-projeto\\\\cryptovault\\\\src\\\\crypto.jsx\")",
+      "Bash(git rm *)",
+      "Bash(git commit *)",
+      "Read(//c/Users/Digital/OneDrive - TrustSis Consultoria/Documentos/fatec/cryptovault-projeto/**)"
     ]
   }
 }
